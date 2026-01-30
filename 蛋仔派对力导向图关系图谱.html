@@ -1,14 +1,14 @@
-<!-- 
-  交互式关系图谱
-  开源协议：MIT License
-  仓库地址：https://github.com/imgsr/dzpdd3js
-  作者：D3.js
--->
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<title>Ta的关系图谱</title>
+<title>Ta的关系图谱</title><!--这里填标题-->
 <script src="https://d3js.org/d3.v7.min.js"></script>
+<!-- 
+  交互式关系图谱
+  开源协议：MIT License
+  作者：D3.js
+-->
+
 <style>
 body{margin:0;padding:0;background:linear-gradient(135deg,#e0f0ff,#c5e3ff);font-family:"Microsoft YaHei",sans-serif;overflow:hidden;}
 .container{position:relative;width:100vw;height:100vh;}
@@ -52,7 +52,6 @@ body{margin:0;padding:0;background:linear-gradient(135deg,#e0f0ff,#c5e3ff);font-
     <h3>关系图例</h3>
     <div class="legend-item"><div class="legend-color" style="background:#ff9a9e"></div><span>宝子</span></div>
     <div class="legend-item"><div class="legend-color" style="background:#6ecb63"></div><span>最佳拍档</span></div>
-    <div class="legend-item"><div class="legend-color" style="background:#4da6ff"></div><span>小苗</span></div>
     <div class="legend-item"><div class="legend-color" style="background:#ffd166"></div><span>挚友</span></div>
     <div class="legend-item"><div class="legend-color" style="background:#db4dff"></div><span>闺蜜</span></div>
     <div class="legend-item"><div class="legend-color" style="background:#5e60ce"></div><span>死党</span></div>
@@ -62,7 +61,7 @@ body{margin:0;padding:0;background:linear-gradient(135deg,#e0f0ff,#c5e3ff);font-
 </div>
 
 <script>
-// ===================== 配置区（你只需要修改这部分内容） =====================
+// ===================== 配置区（你需要大量修改这部分内容） =====================
 // 中心用户信息
 const centerUser = {
   id: "center",
@@ -73,52 +72,39 @@ const centerUser = {
   title: "无敌战神"            // 中心用户称号
 };
 
-// 关系类型映射（已修改名称）
+// 关系类型映射（5类关系）
 const relationTypeMap = {
-  "0001": { type: "宝子", color: "#ff9a9e" },    // CP → 宝子
-  "0002": { type: "最佳拍档", color: "#6ecb63" },// 师父 → 最佳拍档
-  "0003": { type: "小苗", color: "#4da6ff" },    // 徒弟 → 小苗
-  "0004": { type: "挚友", color: "#ffd166" },    // 搭档 → 挚友
-  "0005": { type: "闺蜜", color: "#db4dff" },    // 闺蜜（不变）
-  "0006": { type: "死党", color: "#5e60ce" }     // 基友 → 死党
+  "0001": { type: "宝子", color: "#ff9a9e" },    // 原CP
+  "0002": { type: "最佳拍档", color: "#6ecb63" },// 原师父
+  "0004": { type: "挚友", color: "#ffd166" },    // 原搭档
+  "0005": { type: "闺蜜", color: "#db4dff" },    // 闺蜜
+  "0006": { type: "死党", color: "#5e60ce" }     // 原基友
 };
 
-// 好友关系数据（核心配置区）
-// gender: 1=男, 2=女, 0=保密; intimacy=亲密度; id=唯一标识（自定义即可）
+// 好友关系数据
+// gender: 1=男, 2=女, 0=保密; intimacy=亲密度; id=唯一标识（自定义即可，如f123）
 const friendRelations = {
-  "0001": [ // 宝子（原CP）
+  "0001": [ // 宝子 - 1个
     { id: "f217", nickName: "李四", avatarUrl: "https://via.placeholder.com/64?text=李四", level: 45, gender: 2, intimacy: 217 }
   ],
-  "0002": [ // 最佳拍档（原师父）
+  "0002": [ // 最佳拍档 - 1个
     { id: "f100", nickName: "王五", avatarUrl: "https://via.placeholder.com/64?text=王五", level: 60, gender: 1, intimacy: 100 }
   ],
-  "0003": [ // 小苗（原徒弟） - 10个好友
-    { id: "f892", nickName: "小苗1", avatarUrl: "https://via.placeholder.com/64?text=苗1", level: 30, gender: 2, intimacy: 892 },
-    { id: "f695", nickName: "小苗2", avatarUrl: "https://via.placeholder.com/64?text=苗2", level: 25, gender: 0, intimacy: 695 },
-    { id: "f789", nickName: "小苗3", avatarUrl: "https://via.placeholder.com/64?text=苗3", level: 28, gender: 1, intimacy: 789 },
-    { id: "f456", nickName: "小苗4", avatarUrl: "https://via.placeholder.com/64?text=苗4", level: 22, gender: 2, intimacy: 456 },
-    { id: "f321", nickName: "小苗5", avatarUrl: "https://via.placeholder.com/64?text=苗5", level: 29, gender: 0, intimacy: 321 },
-    { id: "f987", nickName: "小苗6", avatarUrl: "https://via.placeholder.com/64?text=苗6", level: 24, gender: 1, intimacy: 987 },
-    { id: "f876", nickName: "小苗7", avatarUrl: "https://via.placeholder.com/64?text=苗7", level: 27, gender: 2, intimacy: 876 },
-    { id: "f543", nickName: "小苗8", avatarUrl: "https://via.placeholder.com/64?text=苗8", level: 21, gender: 0, intimacy: 543 },
-    { id: "f210", nickName: "小苗9", avatarUrl: "https://via.placeholder.com/64?text=苗9", level: 31, gender: 1, intimacy: 210 },
-    { id: "f198", nickName: "小苗10", avatarUrl: "https://via.placeholder.com/64?text=苗10", level: 26, gender: 2, intimacy: 198 }
-  ],
-  "0004": [ // 挚友（原搭档） - 5个好友
+  "0004": [ // 挚友 - 5个
     { id: "f234", nickName: "挚友1", avatarUrl: "https://via.placeholder.com/64?text=挚1", level: 48, gender: 1, intimacy: 234 },
     { id: "f235", nickName: "挚友2", avatarUrl: "https://via.placeholder.com/64?text=挚2", level: 47, gender: 2, intimacy: 321 },
     { id: "f236", nickName: "挚友3", avatarUrl: "https://via.placeholder.com/64?text=挚3", level: 46, gender: 1, intimacy: 456 },
     { id: "f237", nickName: "挚友4", avatarUrl: "https://via.placeholder.com/64?text=挚4", level: 45, gender: 2, intimacy: 589 },
     { id: "f238", nickName: "挚友5", avatarUrl: "https://via.placeholder.com/64?text=挚5", level: 44, gender: 0, intimacy: 612 }
   ],
-  "0005": [ // 闺蜜 - 5个好友
+  "0005": [ // 闺蜜 - 5个
     { id: "f1403", nickName: "闺蜜1", avatarUrl: "https://via.placeholder.com/64?text=闺1", level: 42, gender: 2, intimacy: 1403 },
     { id: "f1404", nickName: "闺蜜2", avatarUrl: "https://via.placeholder.com/64?text=闺2", level: 41, gender: 2, intimacy: 1321 },
     { id: "f1405", nickName: "闺蜜3", avatarUrl: "https://via.placeholder.com/64?text=闺3", level: 40, gender: 1, intimacy: 1256 },
     { id: "f1406", nickName: "闺蜜4", avatarUrl: "https://via.placeholder.com/64?text=闺4", level: 39, gender: 2, intimacy: 1189 },
     { id: "f1407", nickName: "闺蜜5", avatarUrl: "https://via.placeholder.com/64?text=闺5", level: 38, gender: 0, intimacy: 1023 }
   ],
-  "0006": [ // 死党（原基友） - 5个好友
+  "0006": [ // 死党 - 5个
     { id: "f531", nickName: "死党1", avatarUrl: "https://via.placeholder.com/64?text=死1", level: 49, gender: 1, intimacy: 531 },
     { id: "f532", nickName: "死党2", avatarUrl: "https://via.placeholder.com/64?text=死2", level: 48, gender: 1, intimacy: 621 },
     { id: "f533", nickName: "死党3", avatarUrl: "https://via.placeholder.com/64?text=死3", level: 47, gender: 0, intimacy: 756 },
@@ -126,7 +112,7 @@ const friendRelations = {
     { id: "f535", nickName: "死党5", avatarUrl: "https://via.placeholder.com/64?text=死5", level: 45, gender: 2, intimacy: 912 }
   ]
 };
-// ===================== 配置区结束 =====================
+// ===================== 配置区结束了以下不用修改 =====================
 
 // 初始化节点和链接数据
 const nodes = [centerUser];
@@ -183,7 +169,7 @@ const container = svg.append("g");
 const simulation = d3.forceSimulation(nodes)
   .force("link", d3.forceLink(links).id(d => d.id).distance(d => {
     // 不同关系设置不同的节点间距
-    const distMap = { 宝子: 100, 最佳拍档: 180, 小苗: 220, 挚友: 160, 闺蜜: 150, 死党: 170 };
+    const distMap = { 宝子: 100, 最佳拍档: 180, 挚友: 160, 闺蜜: 150, 死党: 170 };
     return distMap[d.relationType] || 180;
   }))
   .force("charge", d3.forceManyBody().strength(-300)) // 节点排斥力
