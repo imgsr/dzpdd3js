@@ -1,0 +1,343 @@
+<!-- 
+  交互式关系图谱
+  开源协议：MIT License
+  仓库地址：https://github.com/imgsr/dzpdd3js
+  作者：D3.js
+-->
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>Ta的关系图谱</title>
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<style>
+body{margin:0;padding:0;background:linear-gradient(135deg,#e0f0ff,#c5e3ff);font-family:"Microsoft YaHei",sans-serif;overflow:hidden;}
+.container{position:relative;width:100vw;height:100vh;}
+#graph{width:100%;height:100%;}
+.header{position:absolute;top:20px;left:50%;transform:translateX(-50%);background:rgba(255,255,255,.85);border-radius:20px;padding:15px 30px;box-shadow:0 5px 15px rgba(0,0,0,.1);z-index:100;display:flex;align-items:center;justify-content:center;flex-direction:column;max-width:400px;border:2px solid #4a90e2;}
+.header-main{display:flex;align-items:center;margin-bottom:8px;}
+.user-avatar{width:60px;height:60px;border-radius:50%;margin-right:15px;border:3px solid #ff7979;background:#f0f8ff;display:flex;align-items:center;justify-content:center;color:#ff7979;font-weight:bold;object-fit:cover;}
+.user-info h2{margin:0;color:#333;font-size:20px;font-weight:bold;}
+.user-title{color:#ff6b6b;font-size:14px;margin-top:5px;font-weight:bold;}
+.intimacy-display{background:linear-gradient(to right,#ff9a9e,#fad0c4);border-radius:15px;padding:5px 15px;margin-top:10px;color:white;font-weight:bold;font-size:14px;box-shadow:0 3px 6px rgba(0,0,0,.1);}
+.legend{position:absolute;bottom:20px;left:20px;background:rgba(255,255,255,.85);border-radius:15px;padding:15px;box-shadow:0 5px 15px rgba(0,0,0,.1);z-index:100;max-width:250px;}
+.legend h3{margin:0 0 10px 0;color:#333;font-size:16px;}
+.legend-item{display:flex;align-items:center;margin-bottom:8px;font-size:14px;}
+.legend-color{width:20px;height:20px;border-radius:50%;margin-right:10px;border:2px solid white;}
+.node{cursor:pointer;filter:drop-shadow(0 3px 5px rgba(0,0,0,.2));}
+.tooltip{position:absolute;background:rgba(255,255,255,.95);border-radius:12px;padding:15px;box-shadow:0 8px 20px rgba(0,0,0,.15);max-width:250px;z-index:100;opacity:0;transition:opacity .3s;border:1px solid #ddd;pointer-events:none;}
+.tooltip-header{display:flex;align-items:center;margin-bottom:10px;border-bottom:1px solid #eee;padding-bottom:10px;}
+.tooltip-avatar{width:50px;height:50px;border-radius:50%;margin-right:10px;border:2px solid #4a90e2;object-fit:cover;}
+.tooltip-name{font-weight:bold;font-size:18px;color:#333;}
+.tooltip-title{color:#ff7979;font-size:14px;margin-top:3px;}
+.tooltip-info{padding-top:8px;color:#666;font-size:14px;line-height:1.5;}
+.bg-element{position:absolute;opacity:.08;z-index:1;pointer-events:none;}
+.avatar-container{width:100%;height:100%;display:flex;align-items:center;justify-content:center;border-radius:50%;overflow:hidden;background:#f0f8ff;}
+.avatar-image{width:100%;height:100%;object-fit:cover;}
+</style>
+</head>
+<body>
+<div class="container">
+  <div id="bg-elements"></div>
+  <div class="header">
+    <div class="header-main">
+      <img class="user-avatar" src="https://via.placeholder.com/60?text=主用户" alt="主用户头像">
+      <div class="user-info">
+        <h2>张三</h2>
+        <div class="user-title">无敌战神</div>
+      </div>
+    </div>
+    <div class="intimacy-display">亲密度满100的好友才能出现在关系图谱</div>
+  </div>
+  <div class="legend">
+    <h3>关系图例</h3>
+    <div class="legend-item"><div class="legend-color" style="background:#ff9a9e"></div><span>宝子</span></div>
+    <div class="legend-item"><div class="legend-color" style="background:#6ecb63"></div><span>最佳拍档</span></div>
+    <div class="legend-item"><div class="legend-color" style="background:#4da6ff"></div><span>小苗</span></div>
+    <div class="legend-item"><div class="legend-color" style="background:#ffd166"></div><span>挚友</span></div>
+    <div class="legend-item"><div class="legend-color" style="background:#db4dff"></div><span>闺蜜</span></div>
+    <div class="legend-item"><div class="legend-color" style="background:#5e60ce"></div><span>死党</span></div>
+  </div>
+  <svg id="graph"></svg>
+  <div class="tooltip"></div>
+</div>
+
+<script>
+// ===================== 配置区（你只需要修改这部分内容） =====================
+// 中心用户信息
+const centerUser = {
+  id: "center",
+  name: "张三",                // 中心用户昵称
+  avatar: "https://via.placeholder.com/80?text=张三", // 中心用户头像
+  level: 50,                   // 中心用户等级
+  gender: "男",                // 中心用户性别（文字）
+  title: "无敌战神"            // 中心用户称号
+};
+
+// 关系类型映射（已修改名称）
+const relationTypeMap = {
+  "0001": { type: "宝子", color: "#ff9a9e" },    // CP → 宝子
+  "0002": { type: "最佳拍档", color: "#6ecb63" },// 师父 → 最佳拍档
+  "0003": { type: "小苗", color: "#4da6ff" },    // 徒弟 → 小苗
+  "0004": { type: "挚友", color: "#ffd166" },    // 搭档 → 挚友
+  "0005": { type: "闺蜜", color: "#db4dff" },    // 闺蜜（不变）
+  "0006": { type: "死党", color: "#5e60ce" }     // 基友 → 死党
+};
+
+// 好友关系数据（核心配置区）
+// gender: 1=男, 2=女, 0=保密; intimacy=亲密度; id=唯一标识（自定义即可）
+const friendRelations = {
+  "0001": [ // 宝子（原CP）
+    { id: "f217", nickName: "李四", avatarUrl: "https://via.placeholder.com/64?text=李四", level: 45, gender: 2, intimacy: 217 }
+  ],
+  "0002": [ // 最佳拍档（原师父）
+    { id: "f100", nickName: "王五", avatarUrl: "https://via.placeholder.com/64?text=王五", level: 60, gender: 1, intimacy: 100 }
+  ],
+  "0003": [ // 小苗（原徒弟） - 10个好友
+    { id: "f892", nickName: "小苗1", avatarUrl: "https://via.placeholder.com/64?text=苗1", level: 30, gender: 2, intimacy: 892 },
+    { id: "f695", nickName: "小苗2", avatarUrl: "https://via.placeholder.com/64?text=苗2", level: 25, gender: 0, intimacy: 695 },
+    { id: "f789", nickName: "小苗3", avatarUrl: "https://via.placeholder.com/64?text=苗3", level: 28, gender: 1, intimacy: 789 },
+    { id: "f456", nickName: "小苗4", avatarUrl: "https://via.placeholder.com/64?text=苗4", level: 22, gender: 2, intimacy: 456 },
+    { id: "f321", nickName: "小苗5", avatarUrl: "https://via.placeholder.com/64?text=苗5", level: 29, gender: 0, intimacy: 321 },
+    { id: "f987", nickName: "小苗6", avatarUrl: "https://via.placeholder.com/64?text=苗6", level: 24, gender: 1, intimacy: 987 },
+    { id: "f876", nickName: "小苗7", avatarUrl: "https://via.placeholder.com/64?text=苗7", level: 27, gender: 2, intimacy: 876 },
+    { id: "f543", nickName: "小苗8", avatarUrl: "https://via.placeholder.com/64?text=苗8", level: 21, gender: 0, intimacy: 543 },
+    { id: "f210", nickName: "小苗9", avatarUrl: "https://via.placeholder.com/64?text=苗9", level: 31, gender: 1, intimacy: 210 },
+    { id: "f198", nickName: "小苗10", avatarUrl: "https://via.placeholder.com/64?text=苗10", level: 26, gender: 2, intimacy: 198 }
+  ],
+  "0004": [ // 挚友（原搭档） - 5个好友
+    { id: "f234", nickName: "挚友1", avatarUrl: "https://via.placeholder.com/64?text=挚1", level: 48, gender: 1, intimacy: 234 },
+    { id: "f235", nickName: "挚友2", avatarUrl: "https://via.placeholder.com/64?text=挚2", level: 47, gender: 2, intimacy: 321 },
+    { id: "f236", nickName: "挚友3", avatarUrl: "https://via.placeholder.com/64?text=挚3", level: 46, gender: 1, intimacy: 456 },
+    { id: "f237", nickName: "挚友4", avatarUrl: "https://via.placeholder.com/64?text=挚4", level: 45, gender: 2, intimacy: 589 },
+    { id: "f238", nickName: "挚友5", avatarUrl: "https://via.placeholder.com/64?text=挚5", level: 44, gender: 0, intimacy: 612 }
+  ],
+  "0005": [ // 闺蜜 - 5个好友
+    { id: "f1403", nickName: "闺蜜1", avatarUrl: "https://via.placeholder.com/64?text=闺1", level: 42, gender: 2, intimacy: 1403 },
+    { id: "f1404", nickName: "闺蜜2", avatarUrl: "https://via.placeholder.com/64?text=闺2", level: 41, gender: 2, intimacy: 1321 },
+    { id: "f1405", nickName: "闺蜜3", avatarUrl: "https://via.placeholder.com/64?text=闺3", level: 40, gender: 1, intimacy: 1256 },
+    { id: "f1406", nickName: "闺蜜4", avatarUrl: "https://via.placeholder.com/64?text=闺4", level: 39, gender: 2, intimacy: 1189 },
+    { id: "f1407", nickName: "闺蜜5", avatarUrl: "https://via.placeholder.com/64?text=闺5", level: 38, gender: 0, intimacy: 1023 }
+  ],
+  "0006": [ // 死党（原基友） - 5个好友
+    { id: "f531", nickName: "死党1", avatarUrl: "https://via.placeholder.com/64?text=死1", level: 49, gender: 1, intimacy: 531 },
+    { id: "f532", nickName: "死党2", avatarUrl: "https://via.placeholder.com/64?text=死2", level: 48, gender: 1, intimacy: 621 },
+    { id: "f533", nickName: "死党3", avatarUrl: "https://via.placeholder.com/64?text=死3", level: 47, gender: 0, intimacy: 756 },
+    { id: "f534", nickName: "死党4", avatarUrl: "https://via.placeholder.com/64?text=死4", level: 46, gender: 1, intimacy: 889 },
+    { id: "f535", nickName: "死党5", avatarUrl: "https://via.placeholder.com/64?text=死5", level: 45, gender: 2, intimacy: 912 }
+  ]
+};
+// ===================== 配置区结束 =====================
+
+// 初始化节点和链接数据
+const nodes = [centerUser];
+const links = [];
+
+// 处理好友数据，生成节点和链接
+Object.entries(friendRelations).forEach(([relationKey, friends]) => {
+  const { type, color } = relationTypeMap[relationKey];
+  friends.forEach(friend => {
+    // 处理头像默认值和性别文字转换
+    const avatarReal = friend.avatarUrl && !friend.avatarUrl.startsWith("avatar://") ? friend.avatarUrl : 
+      `https://ui-avatars.com/api/?name=${encodeURIComponent(friend.nickName || "玩家")}&background=random&size=80`;
+    const genderText = friend.gender === 0 ? "保密" : friend.gender === 1 ? "男" : "女";
+    
+    // 添加好友节点
+    nodes.push({
+      ...friend,
+      name: friend.nickName,
+      avatarReal,
+      relationType: type,
+      gender: genderText,
+      title: "" // 无称号时默认空
+    });
+    
+    // 添加中心用户和好友的链接
+    links.push({
+      source: centerUser.id,
+      target: friend.id,
+      relationType: type,
+      color: color,
+      value: friend.intimacy
+    });
+  });
+});
+
+// 创建背景装饰元素
+const bg = d3.select("#bg-elements");
+const emojis = ["🔨", "🥚", "🎮", "⭐", "🎖️"];
+for (let i = 0; i < 25; i++) {
+  bg.append("div").classed("bg-element", true)
+    .style("font-size", `${Math.random() * 40 + 20}px`)
+    .style("left", `${Math.random() * 100}%`)
+    .style("top", `${Math.random() * 100}%`)
+    .text(emojis[Math.floor(Math.random() * emojis.length)]);
+}
+
+// 初始化画布
+const width = window.innerWidth;
+const height = window.innerHeight;
+const svg = d3.select("#graph").attr("width", width).attr("height", height);
+const container = svg.append("g");
+
+// 初始化力导向图
+const simulation = d3.forceSimulation(nodes)
+  .force("link", d3.forceLink(links).id(d => d.id).distance(d => {
+    // 不同关系设置不同的节点间距
+    const distMap = { 宝子: 100, 最佳拍档: 180, 小苗: 220, 挚友: 160, 闺蜜: 150, 死党: 170 };
+    return distMap[d.relationType] || 180;
+  }))
+  .force("charge", d3.forceManyBody().strength(-300)) // 节点排斥力
+  .force("center", d3.forceCenter(width / 2, height / 2)) // 居中力
+  .force("collision", d3.forceCollide().radius(d => d.id === "center" ? 80 : 50)); // 碰撞检测
+
+// 绘制链接（线条）
+const link = container.append("g").selectAll("line")
+  .data(links).enter().append("line")
+  .attr("stroke", d => d.color)
+  .attr("stroke-width", 2)
+  .attr("stroke-dasharray", "5,2")
+  .attr("stroke-opacity", 0.6);
+
+// 绘制链接上的亲密度文字
+const linkText = container.append("g").selectAll("text")
+  .data(links).enter().append("text")
+  .text(d => d.value)
+  .attr("font-size", 12)
+  .attr("font-weight", "bold")
+  .attr("fill", "#2c3e50")
+  .attr("pointer-events", "none");
+
+// 绘制节点
+const node = container.append("g").selectAll("g")
+  .data(nodes).enter().append("g")
+  .attr("class", "node")
+  // 节点拖拽功能
+  .call(d3.drag()
+    .on("start", dragstarted)
+    .on("drag", dragged)
+    .on("end", dragended))
+  // 鼠标悬浮提示
+  .on("mouseover", showTooltip)
+  .on("mouseout", hideTooltip);
+
+// 节点圆形背景
+node.append("circle")
+  .attr("r", d => d.id === "center" ? 40 : 32)
+  .attr("fill", "#fff")
+  .attr("stroke", d => {
+    if (d.id === "center") return "#ff7979";
+    const key = Object.keys(relationTypeMap).find(k => relationTypeMap[k].type === d.relationType);
+    return key ? relationTypeMap[key].color : "#ccc";
+  })
+  .attr("stroke-width", 4);
+
+// 节点头像
+const avatar = node.append("foreignObject")
+  .attr("width", d => d.id === "center" ? 80 : 64)
+  .attr("height", d => d.id === "center" ? 80 : 64)
+  .attr("x", d => d.id === "center" ? -40 : -32)
+  .attr("y", d => d.id === "center" ? -40 : -32);
+
+avatar.append("xhtml:div").attr("class", "avatar-container")
+  .html(d => {
+    const avatarUrl = d.avatarReal || d.avatar || 
+      `https://ui-avatars.com/api/?name=${encodeURIComponent(d.name || "玩家")}&background=random&size=80`;
+    return `<img src="${avatarUrl}" class="avatar-image" 
+            onerror="this.src='https://via.placeholder.com/60?text=${(d.name || d.nickName).slice(-2)}'">`;
+  });
+
+// 非中心节点添加关系类型文字
+node.filter(d => d.id !== "center")
+  .append("text")
+  .attr("dy", -12)
+  .attr("text-anchor", "middle")
+  .attr("fill", d => {
+    const key = Object.keys(relationTypeMap).find(k => relationTypeMap[k].type === d.relationType);
+    return key ? relationTypeMap[key].color : "#333";
+  })
+  .attr("font-weight", "bold")
+  .text(d => d.relationType);
+
+// 非中心节点添加亲密度文字
+node.filter(d => d.id !== "center")
+  .append("text")
+  .attr("dy", 45)
+  .attr("text-anchor", "middle")
+  .attr("fill", "#ff6b6b")
+  .attr("font-size", 14)
+  .attr("font-weight", "bold")
+  .text(d => d.intimacy);
+
+// 拖拽事件处理函数
+function dragstarted(e, d) {
+  if (!e.active) simulation.alphaTarget(0.3).restart();
+  d.fx = d.x;
+  d.fy = d.y;
+}
+function dragged(e, d) {
+  d.fx = e.x;
+  d.fy = e.y;
+}
+function dragended(e, d) {
+  if (!e.active) simulation.alphaTarget(0);
+  d.fx = null;
+  d.fy = null;
+}
+
+// 力导向图tick事件（每一帧更新位置）
+simulation.on("tick", () => {
+  // 更新链接位置
+  link.attr("x1", d => d.source.x).attr("y1", d => d.source.y)
+      .attr("x2", d => d.target.x).attr("y2", d => d.target.y);
+  // 更新链接文字位置
+  linkText.attr("x", d => (d.source.x + d.target.x) / 2)
+          .attr("y", d => (d.source.y + d.target.y) / 2 + 3);
+  // 更新节点位置
+  node.attr("transform", d => `translate(${d.x},${d.y})`);
+});
+
+// 画布缩放功能
+svg.call(d3.zoom()
+  .scaleExtent([0.5, 3])
+  .on("zoom", e => container.attr("transform", e.transform)));
+
+// 提示框显示函数
+function showTooltip(e, d) {
+  const tooltip = d3.select(".tooltip");
+  // 获取关系类型对应的颜色
+  let relationColor = "#333";
+  if (d.id !== "center") {
+    const key = Object.keys(relationTypeMap).find(k => relationTypeMap[k].type === d.relationType);
+    relationColor = key ? relationTypeMap[key].color : "#333";
+  }
+  
+  // 构建提示框内容
+  tooltip.html(`
+    <div class="tooltip-header">
+      <img src="${d.avatarReal || d.avatar}" class="tooltip-avatar" 
+           onerror="this.src='https://via.placeholder.com/50?text=${(d.name || d.nickName).slice(-2)}'" 
+           alt="${d.name || d.nickName}头像"/>
+      <div>
+        <div class="tooltip-name">${d.name || d.nickName}</div>
+        <div class="tooltip-title">${d.title || "无称号"}</div>
+      </div>
+    </div>
+    <div class="tooltip-info">
+      <div>关系: <b style="color:${relationColor}">${d.relationType || "自己"}</b></div>
+      <div>等级: ${d.level}</div>
+      ${d.intimacy ? `<div>亲密度: <b>${d.intimacy}</b></div>` : ""}
+      <div>性别: ${d.gender || "保密"}</div>
+    </div>
+  `)
+  .style("left", (e.pageX + 15) + "px")
+  .style("top", (e.pageY - 15) + "px")
+  .style("opacity", 1);
+}
+
+// 提示框隐藏函数
+function hideTooltip() {
+  d3.select(".tooltip").style("opacity", 0);
+}
+</script>
+</body>
+</html>
