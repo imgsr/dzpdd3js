@@ -13,7 +13,7 @@
 2. 直接打开 `蛋仔派对力导向图关系图谱.html` 即可运行（无需后端，纯前端）
 3. 修改代码中「配置区」的内容，自定义：
    - ①中心用户信息（昵称、头像、等级等）
-   - (头像不能通过抓包获得用户协议不让，我用的是百度识图加聚合图床https://graph.baidu.com/pcpage/index?tpl_from=pc与https://www.superbed.cn/)
+   - (用户协议不让抓包，借助网易大神私聊区会加载好友图片，技术上是可以抓到图片包的，我用的是百度识图加聚合图床https://graph.baidu.com/pcpage/index?tpl_from=pc与https://www.superbed.cn/)
    - ②各关系下的好友列表
    - ③关系类型名称、颜色(进阶)
 
