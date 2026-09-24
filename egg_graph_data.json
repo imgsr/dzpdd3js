@@ -1,0 +1,137 @@
+{
+  "center": {
+    "nickName": "亲过小桃",
+    "avatarUrl": "http://egg-head.fp.ps.netease.com/file/6ab4abb9e1f232af25484874VeGOg4pb07?thumbnail=135y135&imageView",
+    "level": 70,
+    "title": "",
+    "gender": 2
+  },
+  "friends": [
+    {
+      "nickName": "竭伧",
+      "avatarUrl": "",
+      "level": 100,
+      "gender": 1,
+      "intimacy": 4199,
+      "relationKey": "0004",
+      "relationName": "挚友"
+    },
+    {
+      "nickName": "桁钥",
+      "avatarUrl": "https://pic1.imgdb.cn/item/697c911dad9f5f6883e25c87.jpg",
+      "level": 42,
+      "gender": 2,
+      "intimacy": 2053,
+      "relationKey": "0005",
+      "relationName": "闺蜜"
+    },
+    {
+      "nickName": "蜜晏",
+      "avatarUrl": "https://pic1.imgdb.cn/item/697c919dad9f5f6883e25c8a.jpg",
+      "level": 58,
+      "gender": 1,
+      "intimacy": 337,
+      "relationKey": "0005",
+      "relationName": "闺蜜"
+    },
+    {
+      "nickName": "微俣",
+      "avatarUrl": "https://pic1.imgdb.cn/item/697c91edad9f5f6883e25c8c.jpg",
+      "level": 93,
+      "gender": 2,
+      "intimacy": 12350,
+      "relationKey": "0006",
+      "relationName": "死党"
+    },
+    {
+      "nickName": "悠哉悠哉梦中",
+      "avatarUrl": "https://pic1.imgdb.cn/item/697c93bcad9f5f6883e25ff0.jpg",
+      "level": 75,
+      "gender": 2,
+      "intimacy": 221,
+      "relationKey": "0006",
+      "relationName": "死党"
+    },
+    {
+      "nickName": "桁箫",
+      "avatarUrl": "",
+      "level": 86,
+      "gender": 1,
+      "intimacy": 8400,
+      "relationKey": "0001",
+      "relationName": "宝子"
+    },
+    {
+      "nickName": "桁数",
+      "avatarUrl": "https://pic1.imgdb.cn/i/034UOLv3p2QB26Lt74El6M.jpg",
+      "level": 52,
+      "gender": 1,
+      "intimacy": 3887,
+      "relationKey": "0002",
+      "relationName": "最佳拍档"
+    },
+    {
+      "nickName": "HE.晨曦",
+      "avatarUrl": "",
+      "level": 80,
+      "gender": 1,
+      "intimacy": 3087,
+      "relationKey": "0004",
+      "relationName": "挚友"
+    },
+    {
+      "nickName": "桁荨",
+      "avatarUrl": "",
+      "level": 73,
+      "gender": 2,
+      "intimacy": 2312,
+      "relationKey": "0004",
+      "relationName": "挚友"
+    },
+    {
+      "nickName": "苻芕",
+      "avatarUrl": "",
+      "level": 61,
+      "gender": 2,
+      "intimacy": 841,
+      "relationKey": "0004",
+      "relationName": "挚友"
+    },
+    {
+      "nickName": "HE.晨曦小号",
+      "avatarUrl": "",
+      "level": 58,
+      "gender": 1,
+      "intimacy": 562,
+      "relationKey": "0004",
+      "relationName": "挚友"
+    },
+    {
+      "nickName": "辞攘",
+      "avatarUrl": "",
+      "level": 91,
+      "gender": 1,
+      "intimacy": 2461,
+      "relationKey": "0006",
+      "relationName": "死党"
+    },
+    {
+      "nickName": "度轭",
+      "avatarUrl": "",
+      "level": 45,
+      "gender": 2,
+      "intimacy": 345,
+      "relationKey": "0006",
+      "relationName": "死党"
+    },
+    {
+      "nickName": "落下来呗",
+      "avatarUrl": "",
+      "level": 84,
+      "gender": 1,
+      "intimacy": 205,
+      "relationKey": "0006",
+      "relationName": "死党"
+    }
+  ]
+}

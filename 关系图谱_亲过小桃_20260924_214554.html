@@ -1,0 +1,214 @@
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>亲过小桃的关系图谱</title>
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<style>
+body{margin:0;padding:0;background:linear-gradient(135deg,#e0f0ff,#c5e3ff);font-family:"Microsoft YaHei",sans-serif;overflow:hidden;}
+.container{position:relative;width:100vw;height:100vh;}
+#graph{width:100%;height:100%;}
+.header{position:absolute;top:20px;left:50%;transform:translateX(-50%);background:rgba(255,255,255,.85);border-radius:20px;padding:15px 30px;box-shadow:0 5px 15px rgba(0,0,0,.1);z-index:100;display:flex;align-items:center;justify-content:center;flex-direction:column;max-width:400px;border:2px solid #4a90e2;}
+.header-main{display:flex;align-items:center;margin-bottom:8px;}
+.user-avatar{width:60px;height:60px;border-radius:50%;margin-right:15px;border:3px solid #ff7979;background:#f0f8ff;object-fit:cover;}
+.user-info h2{margin:0;color:#333;font-size:20px;font-weight:bold;}
+.user-title{color:#ff6b6b;font-size:14px;margin-top:5px;font-weight:bold;}
+.intimacy-display{background:linear-gradient(to right,#ff9a9e,#fad0c4);border-radius:15px;padding:5px 15px;margin-top:10px;color:white;font-weight:bold;font-size:14px;box-shadow:0 3px 6px rgba(0,0,0,.1);}
+.legend{position:absolute;bottom:20px;left:20px;background:rgba(255,255,255,.85);border-radius:15px;padding:15px;box-shadow:0 5px 15px rgba(0,0,0,.1);z-index:100;max-width:250px;}
+.legend h3{margin:0 0 10px 0;color:#333;font-size:16px;}
+.legend-item{display:flex;align-items:center;margin-bottom:8px;font-size:14px;}
+.legend-color{width:20px;height:20px;border-radius:50%;margin-right:10px;border:2px solid white;}
+.node{cursor:pointer;filter:drop-shadow(0 3px 5px rgba(0,0,0,.2));}
+.tooltip{position:absolute;background:rgba(255,255,255,.95);border-radius:12px;padding:15px;box-shadow:0 8px 20px rgba(0,0,0,.15);max-width:250px;z-index:100;opacity:0;transition:opacity .3s;border:1px solid #ddd;pointer-events:none;}
+.tooltip-header{display:flex;align-items:center;margin-bottom:10px;border-bottom:1px solid #eee;padding-bottom:10px;}
+.tooltip-avatar{width:50px;height:50px;border-radius:50%;margin-right:10px;border:2px solid #4a90e2;object-fit:cover;}
+.tooltip-name{font-weight:bold;font-size:18px;color:#333;}
+.tooltip-title{color:#ff7979;font-size:14px;margin-top:3px;}
+.tooltip-info{padding-top:8px;color:#666;font-size:14px;line-height:1.5;}
+.bg-element{position:absolute;opacity:.08;z-index:1;pointer-events:none;}
+.avatar-container{width:100%;height:100%;display:flex;align-items:center;justify-content:center;border-radius:50%;overflow:hidden;background:#f0f8ff;}
+.avatar-image{width:100%;height:100%;object-fit:cover;}
+</style>
+</head>
+<body>
+<div class="container">
+  <div id="bg-elements"></div>
+  <div class="header">
+    <div class="header-main">
+      <img class="user-avatar" src="http://egg-head.fp.ps.netease.com/file/6ab4abb9e1f232af25484874VeGOg4pb07?thumbnail=135y135&imageView" onerror="this.src='https://ui-avatars.com/api/?name=亲过小桃&background=random&size=80'" alt="主用户头像">
+      <div class="user-info">
+        <h2>亲过小桃</h2>
+        <div class="user-title">无称号</div>
+      </div>
+    </div>
+    <div class="intimacy-display">亲密度满100的好友才能出现在关系图谱</div>
+  </div>
+  <div class="legend">
+    <h3>关系图例</h3>
+    <div class="legend-item"><div class="legend-color" style="background:#ff9a9e"></div><span>宝子</span></div>
+    <div class="legend-item"><div class="legend-color" style="background:#6ecb63"></div><span>最佳拍档</span></div>
+    <div class="legend-item"><div class="legend-color" style="background:#ffd166"></div><span>挚友</span></div>
+    <div class="legend-item"><div class="legend-color" style="background:#db4dff"></div><span>闺蜜</span></div>
+    <div class="legend-item"><div class="legend-color" style="background:#5e60ce"></div><span>死党</span></div>
+  </div>
+  <svg id="graph"></svg>
+  <div class="tooltip"></div>
+</div>
+
+<script>
+const centerUser = {"id": "center", "name": "亲过小桃", "avatar": "http://egg-head.fp.ps.netease.com/file/6ab4abb9e1f232af25484874VeGOg4pb07?thumbnail=135y135&imageView", "level": 70, "gender": "女", "title": ""};
+const relationTypeMap = {
+  "0001": { type: "宝子", color: "#ff9a9e" },
+  "0002": { type: "最佳拍档", color: "#6ecb63" },
+  "0004": { type: "挚友", color: "#ffd166" },
+  "0005": { type: "闺蜜", color: "#db4dff" },
+  "0006": { type: "死党", color: "#5e60ce" }
+};
+const friendRelations = {"0004": [{"id": "f竭伧_4199", "nickName": "竭伧", "avatarUrl": "", "level": 100, "gender": 1, "intimacy": 4199}, {"id": "fHE.晨曦_3087", "nickName": "HE.晨曦", "avatarUrl": "", "level": 80, "gender": 1, "intimacy": 3087}, {"id": "f桁荨_2312", "nickName": "桁荨", "avatarUrl": "", "level": 73, "gender": 2, "intimacy": 2312}, {"id": "f苻芕_841", "nickName": "苻芕", "avatarUrl": "", "level": 61, "gender": 2, "intimacy": 841}, {"id": "fHE.晨曦小号_562", "nickName": "HE.晨曦小号", "avatarUrl": "", "level": 58, "gender": 1, "intimacy": 562}], "0005": [{"id": "f桁钥_2053", "nickName": "桁钥", "avatarUrl": "https://pic1.imgdb.cn/item/697c911dad9f5f6883e25c87.jpg", "level": 42, "gender": 2, "intimacy": 2053}, {"id": "f蜜晏_337", "nickName": "蜜晏", "avatarUrl": "https://pic1.imgdb.cn/item/697c919dad9f5f6883e25c8a.jpg", "level": 58, "gender": 1, "intimacy": 337}], "0006": [{"id": "f微俣_12350", "nickName": "微俣", "avatarUrl": "https://pic1.imgdb.cn/item/697c91edad9f5f6883e25c8c.jpg", "level": 93, "gender": 2, "intimacy": 12350}, {"id": "f悠哉悠哉梦中_221", "nickName": "悠哉悠哉梦中", "avatarUrl": "https://pic1.imgdb.cn/item/697c93bcad9f5f6883e25ff0.jpg", "level": 75, "gender": 2, "intimacy": 221}, {"id": "f辞攘_2461", "nickName": "辞攘", "avatarUrl": "", "level": 91, "gender": 1, "intimacy": 2461}, {"id": "f度轭_345", "nickName": "度轭", "avatarUrl": "", "level": 45, "gender": 2, "intimacy": 345}, {"id": "f落下来呗_205", "nickName": "落下来呗", "avatarUrl": "", "level": 84, "gender": 1, "intimacy": 205}], "0001": [{"id": "f桁箫_8400", "nickName": "桁箫", "avatarUrl": "", "level": 86, "gender": 1, "intimacy": 8400}], "0002": [{"id": "f桁数_3887", "nickName": "桁数", "avatarUrl": "https://pic1.imgdb.cn/i/034UOLv3p2QB26Lt74El6M.jpg", "level": 52, "gender": 1, "intimacy": 3887}]};
+
+const nodes = [centerUser];
+const links = [];
+
+Object.entries(friendRelations).forEach(([relationKey, friends]) => {
+  const meta = relationTypeMap[relationKey];
+  if (!meta) return;
+  const { type, color } = meta;
+  friends.forEach(friend => {
+    const avatarReal = friend.avatarUrl && friend.avatarUrl.trim() !== ""
+      ? friend.avatarUrl
+      : `https://ui-avatars.com/api/?name=${encodeURIComponent(friend.nickName || "玩家")}&background=random&size=80`;
+    const genderText = friend.gender === 0 ? "保密" : friend.gender === 1 ? "男" : "女";
+    nodes.push({
+      ...friend,
+      name: friend.nickName,
+      avatarReal,
+      relationType: type,
+      gender: genderText,
+      title: friend.title || ""
+    });
+    links.push({
+      source: centerUser.id,
+      target: friend.id,
+      relationType: type,
+      color: color,
+      value: friend.intimacy
+    });
+  });
+});
+
+const bg = d3.select("#bg-elements");
+const emojis = ["🔨", "🥚", "🎮", "⭐", "🎖️"];
+for (let i = 0; i < 25; i++) {
+  bg.append("div").classed("bg-element", true)
+    .style("font-size", `${Math.random() * 40 + 20}px`)
+    .style("left", `${Math.random() * 100}%`)
+    .style("top", `${Math.random() * 100}%`)
+    .text(emojis[Math.floor(Math.random() * emojis.length)]);
+}
+
+const width = window.innerWidth, height = window.innerHeight;
+const svg = d3.select("#graph").attr("width", width).attr("height", height);
+const container = svg.append("g");
+
+const simulation = d3.forceSimulation(nodes)
+  .force("link", d3.forceLink(links).id(d => d.id).distance(d => {
+    const distMap = { 宝子: 100, 最佳拍档: 180, 挚友: 160, 闺蜜: 150, 死党: 170 };
+    return distMap[d.relationType] || 180;
+  }))
+  .force("charge", d3.forceManyBody().strength(-300))
+  .force("center", d3.forceCenter(width / 2, height / 2))
+  .force("collision", d3.forceCollide().radius(d => d.id === "center" ? 80 : 50));
+
+const link = container.append("g").selectAll("line")
+  .data(links).enter().append("line")
+  .attr("stroke", d => d.color).attr("stroke-width", 2)
+  .attr("stroke-dasharray", "5,2").attr("stroke-opacity", 0.6);
+
+const linkText = container.append("g").selectAll("text")
+  .data(links).enter().append("text")
+  .text(d => d.value).attr("font-size", 12).attr("font-weight", "bold")
+  .attr("fill", "#2c3e50").attr("pointer-events", "none");
+
+const node = container.append("g").selectAll("g")
+  .data(nodes).enter().append("g")
+  .attr("class", "node")
+  .call(d3.drag()
+    .on("start", dragstarted)
+    .on("drag", dragged)
+    .on("end", dragended))
+  .on("mouseover", showTooltip)
+  .on("mouseout", hideTooltip);
+
+node.append("circle")
+  .attr("r", d => d.id === "center" ? 40 : 32)
+  .attr("fill", "#fff")
+  .attr("stroke", d => {
+    if (d.id === "center") return "#ff7979";
+    const key = Object.keys(relationTypeMap).find(k => relationTypeMap[k].type === d.relationType);
+    return key ? relationTypeMap[key].color : "#ccc";
+  })
+  .attr("stroke-width", 4);
+
+const avatar = node.append("foreignObject")
+  .attr("width", d => d.id === "center" ? 80 : 64)
+  .attr("height", d => d.id === "center" ? 80 : 64)
+  .attr("x", d => d.id === "center" ? -40 : -32)
+  .attr("y", d => d.id === "center" ? -40 : -32);
+avatar.append("xhtml:div").attr("class", "avatar-container")
+  .html(d => {
+    const url = d.avatarReal || d.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(d.name || d.nickName || "玩家")}&background=random&size=80`;
+    return `<img src="${url}" class="avatar-image" onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent((d.name || d.nickName || "玩").slice(-2))}&background=random&size=80'">`;
+  });
+
+node.filter(d => d.id !== "center")
+  .append("text").attr("dy", -12).attr("text-anchor", "middle")
+  .attr("fill", d => {
+    const key = Object.keys(relationTypeMap).find(k => relationTypeMap[k].type === d.relationType);
+    return key ? relationTypeMap[key].color : "#333";
+  })
+  .attr("font-weight", "bold").text(d => d.relationType);
+
+node.filter(d => d.id !== "center")
+  .append("text").attr("dy", 45).attr("text-anchor", "middle")
+  .attr("fill", "#ff6b6b").attr("font-size", 14).attr("font-weight", "bold")
+  .text(d => d.intimacy);
+
+function dragstarted(e, d) { if (!e.active) simulation.alphaTarget(.3); d.fx = d.x; d.fy = d.y; }
+function dragged(e, d) { d.fx = e.x; d.fy = e.y; }
+function dragended(e, d) { if (!e.active) simulation.alphaTarget(0); d.fx = null; d.fy = null; }
+
+simulation.on("tick", () => {
+  link.attr("x1", d => d.source.x).attr("y1", d => d.source.y)
+      .attr("x2", d => d.target.x).attr("y2", d => d.target.y);
+  linkText.attr("x", d => (d.source.x + d.target.x) / 2).attr("y", d => (d.source.y + d.target.y) / 2 + 3);
+  node.attr("transform", d => `translate(${d.x},${d.y})`);
+});
+
+svg.call(d3.zoom().scaleExtent([.5, 3]).on("zoom", e => container.attr("transform", e.transform)));
+
+function showTooltip(e, d) {
+  const t = d3.select(".tooltip");
+  let relationColor = "#333";
+  if (d.id !== "center") {
+    const key = Object.keys(relationTypeMap).find(k => relationTypeMap[k].type === d.relationType);
+    relationColor = key ? relationTypeMap[key].color : "#333";
+  }
+  t.html(`
+    <div class="tooltip-header">
+      <img src="${d.avatarReal || d.avatar}" class="tooltip-avatar" onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent((d.name || d.nickName || "玩").slice(-2))}&background=random&size=50'"/>
+      <div>
+        <div class="tooltip-name">${d.name || d.nickName}</div>
+        <div class="tooltip-title">${d.title || "无称号"}</div>
+      </div>
+    </div>
+    <div class="tooltip-info">
+      <div>关系: <b style="color:${relationColor}">${d.relationType || "自己"}</b></div>
+      <div>等级: ${d.level}</div>
+      ${d.intimacy ? `<div>亲密度: <b>${d.intimacy}</b></div>` : ""}
+      <div>性别: ${d.gender || "保密"}</div>
+    </div>
+  `).style("left", (e.pageX + 15) + "px").style("top", (e.pageY - 15) + "px").style("opacity", 1);
+}
+function hideTooltip() { d3.select(".tooltip").style("opacity", 0); }
+</script>
+</body>
+</html>
